@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 from elftools.elf.elffile import ELFFile
 
@@ -22,11 +23,12 @@ try:
         elffile = ELFFile(f)
         sz = 0
         for section in elffile.iter_sections():
-            sz += section.data_size
+            sz += section.header['sh_size'] #data_size
         END_OFFSET = ELF_OFFSET + sz
-        print(END_OFFSET)
+        print(sz,END_OFFSET, END_OFFSET - sz)
     with open("dumped_elf", "wb") as ofile:
         ofile.write(raw[ELF_OFFSET:END_OFFSET])
+        os.chmod("dumped_elf", 0o755)
 except FileNotFoundError:
     print("File not found - aborting!")
     sys.exit(2)
