@@ -130,3 +130,6 @@ dmypy.json
 # firmware
 testdata/
 *.swp
+bigELF
+dumped_elf
+header
