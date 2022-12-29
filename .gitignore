@@ -133,3 +133,4 @@ testdata/
 bigELF
 dumped_elf
 header
+*.bndb
