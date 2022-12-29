@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+# firmware
+testdata/
+*.swp
+bigELF
+dumped_elf
+header
+*.bndb
