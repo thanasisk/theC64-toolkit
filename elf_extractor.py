@@ -45,7 +45,7 @@ def calculate_elf_sz(filename):
         sz = ehsz + phnum * phentsz
         for section in elffile.iter_sections():
             sz += section.header['sh_size']
-    return sz
+    return sz + 1120 # oops, hehe
 
 try:
     with open(sys.argv[1], "rb") as ifile:
@@ -73,6 +73,8 @@ try:
     with open(dumped, "wb") as ofile:
         ofile.write(raw[ELF_OFFSET:END_OFFSET])
     os.chmod(dumped, 0o755)
+    with open(find_suitable_filename("remainder"), "wb") as ofile:
+        ofile.write(raw[END_OFFSET:])
 except FileNotFoundError:
     print("Firmware not found - aborting!")
     sys.exit(2)
