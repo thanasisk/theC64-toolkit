@@ -37,15 +37,18 @@ def calculate_elf_sz(filename):
     with open(fname, 'rb') as f:
         print(fname)
         elffile = ELFFile(f)
+        shoff = elffile['e_shoff']
         phentsz = elffile['e_phentsize']
         phnum = elffile['e_phnum']
         shentsz = elffile['e_shentsize']
         shnum = elffile['e_shnum']
         ehsz = elffile['e_ehsize']
-        sz = ehsz + phnum * phentsz
-        for section in elffile.iter_sections():
-            sz += section.header['sh_size']
-    return sz + 1120 # oops, hehe
+        #sz = ehsz + phnum * phentsz
+        sz = shoff + shnum * shentsz
+        print("Interim sz: " + str(sz))
+        #for section in elffile.iter_sections():
+        #    sz += section.header['sh_size']
+    return sz #+ 1120 # oops, hehe
 
 try:
     with open(sys.argv[1], "rb") as ifile:
