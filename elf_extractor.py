@@ -43,7 +43,8 @@ def calculate_elf_sz(filename):
         shentsz = elffile['e_shentsize']
         shnum = elffile['e_shnum']
         ehsz = elffile['e_ehsize']
-        #sz = ehsz + phnum * phentsz
+        print(phnum * phentsz)
+        print(shnum * shentsz)
         sz = shoff + shnum * shentsz
         print("Interim sz: " + str(sz))
         #for section in elffile.iter_sections():
