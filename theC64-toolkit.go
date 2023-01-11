@@ -51,14 +51,22 @@ func main() {
 	magic := make([]byte, 4)
 	_, err = fw.Read(magic)
 	check(err)
-	fmt.Println(hex.EncodeToString(magic)) // TODO: check magic
+	mgc := hex.EncodeToString(magic) // TODO: check magic
+	correct_mgc := "ac64ac64"
+	if mgc != correct_mgc {
+		fmt.Println("Invalid magic: " + mgc)
+		os.Exit(2)
+	}
+	fmt.Println("Magic: " + mgc)
 	version := make([]byte, 4)
 	_, err = fw.Read(version)
 	check(err)
+	fmt.Print("Version: ")
 	fmt.Println(binary.LittleEndian.Uint32(version))
 	fw_sha256 := make([]byte, 32)
 	_, err = fw.Read(fw_sha256)
 	check(err)
+	fmt.Print("FW SHA256: ")
 	fmt.Println(hex.EncodeToString(fw_sha256))
 	installer_offset := make([]byte, 4)
 	installer_size := make([]byte, 4)
@@ -69,7 +77,6 @@ func main() {
 	installer_section := newSection(binary.LittleEndian.Uint32(installer_offset), binary.LittleEndian.Uint32(installer_size))
 	old_offset := getFileOffset(fw)
 	writeSectionToDisk("installer", *installer_section, fw)
-	fmt.Println(getFileOffset(fw))
 	fw.Seek(old_offset, 0)
 	// add installer.enc
 	enc_ins_offset := make([]byte, 4)
@@ -89,6 +96,7 @@ func main() {
 	check(err)
 	size_of_header := bytes.Index(firmware, elf_sig)
 	no_of_ext_sections := (int64(size_of_header) - getFileOffset(fw)) / 8
+	fmt.Print("Calculated # of sections: ")
 	fmt.Println(no_of_ext_sections)
 	offsets := make([]uint32, no_of_ext_sections)
 	sizes := make([]uint32, no_of_ext_sections)
@@ -98,20 +106,16 @@ func main() {
 		check(err)
 		offsets[i] = binary.LittleEndian.Uint32(tmp)
 	}
-	fmt.Println(getFileOffset(fw))
 	for i := 0; i < int(no_of_ext_sections); i++ {
 		_, err := fw.Read(tmp)
 		check(err)
 		sizes[i] = binary.LittleEndian.Uint32(tmp)
 	}
-	fmt.Println(offsets)
-	fmt.Println(sizes)
 	ext_sections := make([]*section, no_of_ext_sections)
 	for i := 0; i < int(no_of_ext_sections); i++ {
 		ext_sections[i] = newSection(offsets[i], sizes[i])
 		sectionFilename := "section." + strconv.Itoa(i) + ".enc"
 		writeSectionToDisk(sectionFilename, *ext_sections[i], fw)
-		fmt.Println(sectionFilename)
 		decryptSection(sectionFilename, getEncryptionKey())
 	}
 }
@@ -135,11 +139,26 @@ func writeSectionToDisk(name string, sect section, fw *os.File) {
 	check(err)
 	_, err = ofile.Write(tmp)
 	check(err)
-	fmt.Println("Wrote: "+name, sect.offset+sect.length)
+	fmt.Println("Wrote: "+name, sect.offset+sect.length, strconv.FormatInt(int64(sect.offset+sect.length), 16))
 }
 
 func getEncryptionKey() []byte {
-	foo, err := hex.DecodeString("5004F002B0BC5597C857B1D6568DE58D")
+	// sha256sum(1) of keyfile
+	kf256 := "650d9c3dc1860e6be17b3f55be1bf3825af718a43df1c510819ccf87e5ccf214"
+	// a little binary ninja goes a long way ...
+	recovered_key, err := hex.DecodeString("6631c06689df66f3ab6689e066e8d3ef")
+	check(err)
+	res := ""
+	for i := 0; i < len(recovered_key); i++ {
+		digit := byte(kf256[i]) ^ byte(recovered_key[i])
+		temp := strconv.FormatInt(int64(digit), 16)
+		// poor man's rjust
+		if len(temp) == 1 {
+			temp = "0" + temp
+		}
+		res += temp
+	}
+	foo, err := hex.DecodeString(res)
 	check(err)
 	return foo
 }
@@ -178,5 +197,4 @@ func decryptSection(filename string, key []byte) {
 	check(err)
 	buffer := C.GoBytes(unsafe.Pointer(ret), C.int(fl.Size()))
 	ofile.Write(buffer)
-
 }

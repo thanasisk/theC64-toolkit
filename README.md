@@ -16,5 +16,10 @@ Reversing, I found out that `libgcrypt 1.7.3` was used to encrypt the firmware s
 
 Plus, it was a nice experiment with `cgo` :-)
 
+## Decryption does not work anymore
+`sha256sum libEGL.so` goes a long way ...
+## Greetz
+- verdic for reversing the keygeneration algo.
+- The giants on whose shoulders I am standing ...
 ## LICENSE
 GPL v3
